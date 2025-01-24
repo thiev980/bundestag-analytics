@@ -1,0 +1,36 @@
+name: Daily Data Fetch
+
+on:
+  schedule:
+    - cron: '0 4 * * *'  # Läuft jeden Tag um 04:00 UTC
+  workflow_dispatch:      # Ermöglicht manuelles Auslösen
+
+jobs:
+  fetch-data:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.11'
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+          
+      - name: Fetch data
+        env:
+          API_KEY: ${{ secrets.BUNDESTAG_API_KEY }}
+        run: python src/data/fetch_daily.py
+        
+      - name: Commit and push if changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add .
+          git diff --quiet && git diff --staged --quiet || git commit -m "Update data $(date '+%Y-%m-%d')"
+          git push
