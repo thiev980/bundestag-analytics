@@ -18,13 +18,15 @@ logger = logging.getLogger(__name__)
 
 class BundestagCollector:
     def __init__(self):
+        # Versuche .env zu laden, aber nicht zwingend
         load_dotenv()
-        self.base_url = os.getenv('BASE_URL')
-        self.api_key = os.getenv('API_KEY')
-        self.database_url = os.getenv('DATABASE_URL', 'sqlite:///bundestag.db')
         
-        if not all([self.base_url, self.api_key]):
-            raise ValueError("BASE_URL und API_KEY müssen in .env definiert sein")
+        # Hole Werte aus Environment oder .env
+        self.base_url = os.getenv('BASE_URL') or "https://search.dip.bundestag.de/api/v1"
+        self.api_key = os.getenv('API_KEY')
+        
+        if not self.api_key:
+            raise ValueError("API_KEY muss in Umgebungsvariablen oder .env definiert sein")
         
         self.headers = {
             "Accept": "application/json",
