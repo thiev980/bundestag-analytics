@@ -21,7 +21,7 @@ wheels/
 venv/
 
 # Datenbank
-*.db
+#*.db
 *.sqlite3
 
 # Environment
