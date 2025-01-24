@@ -24,6 +24,7 @@ class BundestagCollector:
         # Hole Werte aus Environment oder .env
         self.base_url = os.getenv('BASE_URL') or "https://search.dip.bundestag.de/api/v1"
         self.api_key = os.getenv('API_KEY')
+        self.database_url = os.getenv('DATABASE_URL') or "sqlite:///bundestag.db"
         
         if not self.api_key:
             raise ValueError("API_KEY muss in Umgebungsvariablen oder .env definiert sein")
