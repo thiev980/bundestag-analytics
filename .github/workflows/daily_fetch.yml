@@ -35,7 +35,10 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          #git add bundestag.db
-          git add -f bundestag.db  # -f Flag zum Forcieren des Adds
-          git diff --quiet && git diff --staged --quiet || git commit -m "Update data $(date '+%Y-%m-%d')"
-          git push
+          if [[ -n $(git status -s bundestag.db) ]]; then
+            git add bundestag.db
+            git commit -m "Update data $(date '+%Y-%m-%d'): Neue oder aktualisierte Protokolle"
+            git push
+          else
+            echo "Keine Änderungen in der Datenbank"
+          fi

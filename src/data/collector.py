@@ -49,9 +49,16 @@ class BundestagCollector:
         ).first()
         
         if existing:
-            logger.info(f"Protokoll {data['id']} bereits vorhanden")
+            # Aktualisiere nur, wenn sich etwas geändert hat
+            if existing.aktualisiert != datetime.fromisoformat(data['aktualisiert'].replace('Z', '+00:00')):
+                existing.aktualisiert = datetime.fromisoformat(data['aktualisiert'].replace('Z', '+00:00'))
+                existing.vorgangsbezug_anzahl = data['vorgangsbezug_anzahl']
+                self.session.commit()
+                logger.info(f"Protokoll {data['id']} aktualisiert")
+            else:
+                logger.info(f"Protokoll {data['id']} unverändert")
             return existing
-            
+                
         # Erstelle neues Protokoll
         protokoll = Plenarprotokoll(
             dokument_id=data['id'],
@@ -76,7 +83,7 @@ class BundestagCollector:
         try:
             self.session.add(protokoll)
             self.session.commit()
-            logger.info(f"Protokoll {data['id']} gespeichert")
+            logger.info(f"Protokoll {data['id']} neu gespeichert")
             return protokoll
         except Exception as e:
             self.session.rollback()
@@ -112,13 +119,10 @@ class BundestagCollector:
             logger.error(f"Fehler beim Abrufen der Plenarprotokolle: {e}")
             raise
 
-    def collect_and_save_protokolle(
-        self, 
-        wahlperiode: int = 20, 
-        batch_size: int = 50,
-        since_date: datetime = None
-    ) -> List[Dict]:
+    def collect_and_save_protokolle(self, wahlperiode: int = 20, batch_size: int = 50, since_date: datetime = None) -> List[Dict]:
+        """Sammelt alle Protokolle und speichert sie in der Datenbank"""
         all_protokolle = []
+        neue_oder_aktualisierte = 0
         offset = 0
         
         while True:
@@ -134,18 +138,20 @@ class BundestagCollector:
             
             if not batch.get('documents'):
                 break
-            
+                
             for doc in batch['documents']:
                 protokoll = self.save_protokoll(doc)
                 all_protokolle.append(protokoll)
-                logger.info(f"Verarbeitet: Protokoll {doc.get('dokumentnummer')} vom {doc.get('aktualisiert')}")
+                if protokoll.aktualisiert >= (since_date or datetime.min):
+                    neue_oder_aktualisierte += 1
             
             if len(batch['documents']) < batch_size:
                 break
-            
+                
             offset += batch_size
         
-        logger.info(f"Insgesamt {len(all_protokolle)} neue/aktualisierte Protokolle verarbeitet")
+        logger.info(f"Insgesamt {len(all_protokolle)} Protokolle verarbeitet")
+        logger.info(f"Davon {neue_oder_aktualisierte} neu oder aktualisiert")
         return all_protokolle
 
     def __del__(self):
