@@ -33,3 +33,35 @@ def get_protokolle(skip: int = 0, limit: int = 10):
         "datum": p.aktualisiert,
         "vorgaenge": p.vorgangsbezug_anzahl
     } for p in protokolle]
+
+@app.get("/protokoll/{dokument_id}")
+def get_protokoll_detail(dokument_id: str):
+    protokoll = collector.session.query(Plenarprotokoll)\
+        .filter(Plenarprotokoll.dokument_id == dokument_id)\
+        .first()
+    
+    if not protokoll:
+        raise HTTPException(status_code=404, detail="Protokoll nicht gefunden")
+    
+    return {
+        "id": protokoll.dokument_id,
+        "nummer": protokoll.dokumentnummer,
+        "datum": protokoll.aktualisiert,
+        "herausgeber": protokoll.herausgeber,
+        "vorgaenge": [
+            {
+                "id": v.vorgang_id,
+                "typ": v.vorgangstyp,
+                "titel": v.titel
+            }
+            for v in protokoll.vorgangsbezuege
+        ]
+    }
+
+@app.get("/top-themen")
+def get_top_themen(limit: int = 10):
+    return analyzer.get_top_themen(limit)
+
+@app.get("/vorgangstypen-trend")
+def get_vorgangstypen_trend():
+    return analyzer.get_vorgangstypen_trend()

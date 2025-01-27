@@ -5,13 +5,14 @@
 }
 
 .stats-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  display: flex;
+  justify-content: space-between;
   gap: 20px;
   margin: 20px 0;
 }
 
 .card {
+  flex: 1;
   background: #fff;
   padding: 20px;
   border-radius: 8px;
@@ -43,4 +44,40 @@ th, td {
 
 th {
   background-color: #f5f5f5;
+}
+
+/* Dark mode styles */
+@media (prefers-color-scheme: light) {
+  body {
+    background-color: #1a1a1a;
+    color: #ffffff;
+  }
+
+  .card, .chart-section {
+    background: #2d2d2d;
+  }
+
+  table th {
+    background-color: #2d2d2d;
+  }
+
+  table td {
+    border-color: #404040;
+  }
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .stats-cards {
+    flex-direction: column;
+  }
+
+  .chart-section {
+    overflow-x: auto;
+  }
+
+  table {
+    display: block;
+    overflow-x: auto;
+  }
 }
